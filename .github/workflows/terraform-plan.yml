@@ -7,7 +7,6 @@ on:
             - "**.tfvars"
             - ".terraform.lock.hcl"
             - ".github/workflows/terraform-plan.yml"
-    workflow_dispatch:
 permissions:
     id-token: write
     contents: read
@@ -21,7 +20,7 @@ jobs:
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v6.3.0
               with:
-                  role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan
+                  role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlanPR
                   aws-region: eu-north-1
                   allowed-account-ids: 870318142654
 
@@ -38,4 +37,4 @@ jobs:
               run: terraform validate -no-color
 
             - name: Terraform Plan
-              run: terraform plan -input=false -no-color
+              run: terraform plan -input=false -lock=false -no-color
