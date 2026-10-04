@@ -6,6 +6,6 @@ locals {
     Project     = local.project
     Environment = local.environment
     ManagedBy   = "Terraform"
-    Lab = "terraform-aws-lab"
+    Lab         = "terraform-aws-lab"
   }
 }
