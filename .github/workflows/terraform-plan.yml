@@ -24,6 +24,7 @@ jobs:
                   aws-region: eu-north-1
                   allowed-account-ids: 870318142654
 
+                  
             - name: Set up Terraform
               uses: hashicorp/setup-terraform@v4
 
