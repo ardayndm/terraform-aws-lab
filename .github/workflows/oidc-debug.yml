@@ -1,28 +1,23 @@
-name: OIDC Debug
+name: AWS OIDC Test
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  debug:
+  test-aws-auth:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Inspect OIDC claims
-        env:
-          AUDIENCE: sts.amazonaws.com
-        run: |
-          TOKEN_JSON=$(curl -s \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan
+          aws-region: eu-north-1
+          allowed-account-ids: 870318142654
 
-          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -r '.value')
-
-          echo "$ID_TOKEN" \
-            | cut -d '.' -f2 \
-            | base64 -d 2>/dev/null \
-            | jq .
+      - name: Check AWS identity
+        run: aws sts get-caller-identity
