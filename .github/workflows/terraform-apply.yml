@@ -1,0 +1,31 @@
+name: Terraform Apply
+
+on:
+    push:
+        branches:
+            - master
+permissions:
+    id-token: write
+    contents: read
+jobs:
+    terraform-apply:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v6.3.0
+              with:
+                  role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan
+                  aws-region: eu-north-1
+                  allowed-account-ids: 870318142654
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v4
+
+            - name: Terraform Init
+              run: terraform init -input=false
+
+            - name: Terraform Apply
+              run: terraform apply -input=false -auto-approve
