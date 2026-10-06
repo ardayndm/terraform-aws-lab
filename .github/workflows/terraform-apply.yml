@@ -43,6 +43,8 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
     needs: plan
+    environment:
+      name: production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -50,7 +52,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan
+          role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformApply
           aws-region: eu-north-1
           allowed-account-ids: 870318142654
 
