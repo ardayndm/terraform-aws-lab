@@ -67,7 +67,7 @@ resource "aws_instance" "acme_instance" {
   vpc_security_group_ids      = [aws_security_group.acme_sg.id]
   associate_public_ip_address = true
   tags = merge(local.common_tags, {
-    Name     = "TerraformCreated"
+    Name = "TerraformCreated"
   })
 
   # Root volume configuration
