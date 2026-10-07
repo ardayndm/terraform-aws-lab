@@ -1,9 +1,18 @@
 resource "aws_security_group" "this" {
-  name        = "${var.project}-${var.environment}-module-sg"
-  description = "Security group created by reusable module"
+  name        = "${var.project}_sg"
+  description = "Security group for acme"
   vpc_id      = var.vpc_id
 
   ingress {
+    # SSH
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.ssh_cidr]
+  }
+
+  ingress {
+    ## HTTP
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"

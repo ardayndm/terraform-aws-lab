@@ -1,4 +1,4 @@
-name: Terraform Apply
+name: Terraform Deploy
 
 on:
   push:
@@ -8,21 +8,95 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  plan:
-    name: Terraform Plan
+  # ==============================================
+  # STAGING
+  # ==============================================
+
+  staging-plan:
+    name: Terraform Plan (Staging)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan
+          role-to-assume: "arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan"
           aws-region: eu-north-1
           allowed-account-ids: 870318142654
 
-      - name: Set up Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Terraform Init
+        working-directory: environments/staging
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        working-directory: environments/staging
+        run: terraform plan -input=false -lock-timeout=2m -out=tfplan
+
+      - name: Upload Staging Plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: tfplan-staging
+          path: environments/staging/tfplan
+
+  staging-apply:
+    name: Terraform Apply (Staging)
+    runs-on: ubuntu-latest
+    needs: staging-plan
+    environment: staging
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: "arn:aws:iam::870318142654:role/GitHubActionsTerraformStaging"
+          aws-region: eu-north-1
+          allowed-account-ids: 870318142654
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Terraform Init
+        working-directory: environments/staging
+        run: terraform init -input=false
+
+      - name: Download Staging Plan
+        uses: actions/download-artifact@v5
+        with:
+          name: tfplan-staging
+          path: environments/staging
+
+      - name: Terraform Apply
+        working-directory: environments/staging
+        run: terraform apply -input=false -lock-timeout=2m tfplan
+
+  # ==============================================
+  # PRODUCTION
+  # ==============================================
+
+  production-plan:
+    name: Terraform Plan (Production)
+    runs-on: ubuntu-latest
+    needs: staging-apply
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: "arn:aws:iam::870318142654:role/GitHubActionsTerraformPlan"
+          aws-region: eu-north-1
+          allowed-account-ids: 870318142654
+
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
@@ -32,40 +106,41 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan -input=false
+        run: terraform plan -input=false -lock-timeout=2m -out=tfplan
 
-      - name: Upload Terraform Plan
+      - name: Upload Production Plan
         uses: actions/upload-artifact@v7
         with:
-          name: terraform-plan
+          name: tfplan-production
           path: tfplan
-  apply:
-    name: Terraform Apply
+
+  production-apply:
+    name: Terraform Apply (Production)
     runs-on: ubuntu-latest
-    needs: plan
-    environment:
-      name: production
+    needs: production-plan
+    environment: production
+
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::870318142654:role/GitHubActionsTerraformApply
+          role-to-assume: "arn:aws:iam::870318142654:role/GitHubActionsTerraformApply"
           aws-region: eu-north-1
           allowed-account-ids: 870318142654
 
-      - name: Set up Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Download Terraform Plan
+      - name: Download Production Plan
         uses: actions/download-artifact@v5
         with:
-          name: terraform-plan
+          name: tfplan-production
 
       - name: Terraform Apply
         run: terraform apply -input=false -lock-timeout=2m tfplan
